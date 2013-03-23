@@ -66,34 +66,34 @@ def output_tasks(tasks, columns, args, top=True):
 			for k in columns:
 				if k == 'n':
 					if top:
-						print '#%d' % t['#'],
+						print '#%d\t' % t['#'],
 				elif k == 'id':
-					print t.get('index', t['id']),
-				elif k == 'name':
-					print t['name'].encode(default_encoding),
+					print '%s\t' % t.get('index', t['id']),
 				elif k == 'status':
 					with colors(args.colors).bold():
-						print t['status_text'],
+						print '%s\t' % t['status_text'],
 				elif k == 'size':
 					if args.format_size:
 						from lixian_util import format_size
-						print format_size(t['size']),
+						print '%s\t' % format_size(t['size']),
 					else:
-						print t['size'],
+						print '%s\t' % t['size'],
 				elif k == 'progress':
-					print t['progress'],
+					print '%s\t' % t['progress'],
 				elif k == 'speed':
-					print t['speed'],
+					print '%s\t' % t['speed'],
 				elif k == 'date':
-					print t['date'],
+					print '%s\t' % t['date'],
 				elif k == 'dcid':
-					print t['dcid'],
+					print '%s\t' % t['dcid'],
 				elif k == 'gcid':
-					print t['gcid'],
+					print '%s\t' % t['gcid'],
 				elif k == 'original-url':
-					print t['original_url'],
+					print '%s\t' % t['original_url'],
 				elif k == 'download-url':
-					print t['xunlei_url'],
+					print '%s\t' % t['xunlei_url'],
+				elif k == 'name':
+					print '%s\t' % t['name'].encode(default_encoding),
 				else:
 					raise NotImplementedError(k)
 			print

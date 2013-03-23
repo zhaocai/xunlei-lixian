@@ -48,7 +48,7 @@ def list_task(args):
 		if len(args) == 1 and re.match(r'\d+/', args[0]) and len(tasks) == 1 and 'files' in tasks[0]:
 			parent_ids = [tasks[0]['id']]
 			tasks = tasks[0]['files']
-	columns = ['n', 'id', 'name', 'status', 'size', 'progress', 'speed', 'date', 'dcid', 'gcid', 'original-url', 'download-url']
+	columns = ['n', 'id', 'status', 'size', 'progress', 'speed', 'date', 'dcid', 'gcid', 'name', 'original-url', 'download-url']
 	columns = filter(lambda k: getattr(args, k), columns)
 
 	output_tasks(tasks, columns, args, not parent_ids)
