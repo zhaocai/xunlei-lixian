@@ -5,6 +5,8 @@ from lixian_config import *
 import subprocess
 import urllib2
 import os.path
+import json
+import time
 
 download_tools = {}
 
@@ -111,6 +113,28 @@ class Aria2DownloadTool:
 		exit_code = subprocess.call(aria2_opts)
 		if exit_code != 0:
 			raise Exception('aria2c exited abnormally')
+
+@download_tool('aria2rpc')
+def aria2rpc_download(client, download_url, path, resuming=False):
+        gdriveid = str(client.get_gdriveid())
+        dir = os.path.dirname(path)
+        filename = os.path.basename(path)
+	aria2rpchost = get_config('aria2-rpc-host', 'localhost')
+	aria2rpcport = get_config('aria2-rpc-port', '6800')
+	ts = str(int(time.time()*1000))
+	data = {"jsonrpc": "2.0", 
+		"method":"aria2.addUri",
+		"id": ts,
+		"params": [[download_url], 
+			{"out": filename, 
+			"header": "Cookie: gdriveid="+gdriveid}
+			
+			]
+		}
+	data = json.dumps(data)
+	request_url = "http://"+aria2rpchost+":"+aria2rpcport+"/jsonrpc?tm="+ts
+	urllib2.urlopen(request_url, data)
+
 
 @download_tool('axel')
 def axel_download(client, download_url, path, resuming=False):
