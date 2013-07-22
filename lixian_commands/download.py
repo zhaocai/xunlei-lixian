@@ -77,6 +77,7 @@ def download_file(client, path, task, options):
 	overwrite = options.get('overwrite')
 	mini_hash = options.get('mini_hash')
 	no_hash = options.get('no_hash')
+	async = options.get('async')
 
 	url = str(task['xunlei_url'])
 	if options['node']:
@@ -121,7 +122,18 @@ def download_file(client, path, task, options):
 			if not verify(path, task):
 				raise Exception('hash check failed')
 
-	download2(client, url, path, task)
+	def download_async(client, url, path, task):
+		size=task['size']
+		download = download_tool(client=client, url=url, path=path, size=size, resuming=resuming, async=True)
+		download1(download, path)
+
+	def download3(client, url, path, task, async):
+		if async:
+			download_async(client, url, path, task)
+		else:
+			download2(client, url, path, task)
+
+	download3(client, url, path, task, async)
 
 
 def download_single_task(client, task, options):
@@ -252,6 +264,7 @@ def download_multiple_tasks(client, tasks, options):
 @command_line_value('category')
 @command_line_option('delete', default=get_config('delete'))
 @command_line_option('continue', alias='c', default=get_config('continue'))
+@command_line_option('async', default=get_config('async'))
 @command_line_option('overwrite')
 @command_line_option('mini-hash', default=get_config('mini-hash'))
 @command_line_option('hash', default=get_config('hash', True))
@@ -269,6 +282,7 @@ def download_task(args):
 	                 'output_dir': args.output_dir,
 	                 'delete': args.delete,
 	                 'resuming': args._args['continue'],
+	                 'async': args._args['async'],
 	                 'overwrite': args.overwrite,
 	                 'mini_hash': args.mini_hash,
 	                 'no_hash': not args.hash,
@@ -303,16 +317,28 @@ def download_task(args):
 
 	elif args.watch:
 		assert not args.output, 'not supported with watch option yet'
+		old_tasks = []
 		tasks = query.pull_completed()
 		while True:
-			if tasks:
-				download_multiple_tasks(client, tasks, download_args)
+			new_tasks = []
+			for nt in tasks:
+				is_new = True
+				for ot in old_tasks:
+					if nt['id'] == ot['id']:
+						is_new = False
+						break
+				if is_new:
+					new_tasks.append(nt)
+
+			if new_tasks:
+				download_multiple_tasks(client, new_tasks, download_args)
 			if (not query.download_jobs) and (not query.queries):
 				break
-			if not tasks:
+			if not new_tasks:
 				sleep(args.watch_interval)
 			query.refresh_status()
 			query.query_search()
+			old_tasks = tasks
 			tasks = query.pull_completed()
 
 	else:
