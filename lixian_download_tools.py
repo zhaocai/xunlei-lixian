@@ -3,7 +3,7 @@ __all__ = ['download_tool', 'get_tool']
 
 from lixian_config import *
 import subprocess
-import urllib2
+import urllib2, base64
 import os.path
 import json
 import time
@@ -116,24 +116,36 @@ class Aria2DownloadTool:
 
 @download_tool('aria2rpc')
 def aria2rpc_download(client, download_url, path, resuming=False):
-        gdriveid = str(client.get_gdriveid())
-        dir = os.path.dirname(path)
-        filename = os.path.basename(path)
+	gdriveid = str(client.get_gdriveid())
+	dir = os.path.dirname(path)
+	filename = os.path.basename(path)
 	aria2rpchost = get_config('aria2-rpc-host', 'localhost')
 	aria2rpcport = get_config('aria2-rpc-port', '6800')
+	aria2rpcuser = get_config('aria2-rpc-user', None)
+	aria2rpcpass = get_config('aria2-rpc-pass', '')
+
 	ts = str(int(time.time()*1000))
-	data = {"jsonrpc": "2.0", 
+	data = {"jsonrpc": "2.0",
 		"method":"aria2.addUri",
 		"id": ts,
-		"params": [[download_url], 
-			{"out": filename, 
+		"params": [[download_url],
+			{
+			"dir": dir,
+			"out": filename,
 			"header": "Cookie: gdriveid="+gdriveid}
-			
 			]
 		}
 	data = json.dumps(data)
+
 	request_url = "http://"+aria2rpchost+":"+aria2rpcport+"/jsonrpc?tm="+ts
-	urllib2.urlopen(request_url, data)
+
+	if aria2rpcuser:
+		request = urllib2.Request(request_url)
+		base64string = base64.encodestring('%s:%s' % (aria2rpcuser, aria2rpcpass)).replace('\n', '')
+		request.add_header("Authorization", "Basic %s" % base64string)
+		urllib2.urlopen(request, data)
+	else:
+		urllib2.urlopen(request_url, data)
 
 
 @download_tool('axel')
